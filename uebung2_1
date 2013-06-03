@@ -1,0 +1,122 @@
+//übung2.1
+#include <iostream>
+#include <cstdlib> //für exit()
+#include <fstream>
+#include <string>
+using namespace std;
+
+int main() 
+{
+  //Das Programm verlange die folgenden Eingaben: 
+	//Kreditumfang(in Euro), nominaler Zinsatz in Prozent(pro Jahr), 
+	//Anfangsmonat, Anfangsjahr, Höhe der monatlichen Rate, 
+	//Laufzeit des Kredits in Jahren.
+	double schulden, zinsatzProzent, zinsatz, zinsen, rate, minRate, tilgung;
+	unsigned int anfangsMonat, anfangsJahr, laufzeit;
+	
+	do {
+		cout<<"Kreditumfang(in Euro): ";
+		cin>>schulden;
+		if (schulden <= 0)
+			cout<<"Falsche Eingabe!";
+	} while(schulden<=0);
+
+	do {
+		cout<<"Zinsatz in %(pro Jahr): ";
+		cin>>zinsatzProzent;
+	} while(zinsatzProzent<=0 || zinsatzProzent>=100);
+	
+	do {
+		cout<<"Anfangsmonat (1..12): ";
+		cin>>anfangsMonat;
+	} while (anfangsMonat<1 || anfangsMonat>12);
+
+	cout<<"Anfangsjahr (jjjj): ";
+	cin>>anfangsJahr;
+
+	do {
+		cout<<"Laufzeit in Jahren: ";
+		cin>>laufzeit;
+	} while(laufzeit<=0);
+
+	zinsatz = 0.01*zinsatzProzent;
+	zinsen = schulden*zinsatz/12.;
+	zinsen = zinsen*100.+0.5;
+	long temp = (long)zinsen;
+	zinsen = (double)temp/100.;
+	minRate = zinsen+0.01;
+
+	do {
+		cout << "monatliche Rate (mindestens " << minRate << " ): ";
+		cin >> rate;
+		if (rate < minRate)
+			cout<<"Falsche Eingabe!";
+	} while(rate < minRate);
+
+	ofstream ausgabe("tilgungsplan3.txt");
+	ausgabe << "Tilgungsplan" <<endl;
+	ausgabe.setf(ios::showpoint|ios::fixed, ios::floatfield);
+	ausgabe.precision(2);
+	ausgabe << "Anfangsschulden : " << schulden << "\tZinsatz nominal : " << zinsatzProzent <<"%"<<endl <<endl;
+	unsigned int monat = anfangsMonat, jahr = anfangsJahr;
+	double summeBezahlt = 0.0, summeTilgung = 0.0, summeZinsen = 0.0;
+	double gesamtSummeBezahlt = 0.0, gesamtSummeTilgung = 0.0, gesamtSummeZinsen = 0.0;
+	do {
+		if(monat==1 || ((jahr == anfangsJahr)&&(monat == anfangsMonat))) {
+			ausgabe<<"Zahlmonat";
+			ausgabe.width(9); ausgabe<<"Rate";
+			ausgabe.width(10); ausgabe<<"Zinsen";
+			ausgabe.width(10); ausgabe<<"Tilgung";
+			ausgabe.width(12); ausgabe<<"Rest\n";
+		}
+		if(rate > schulden+zinsen)
+			rate = schulden+zinsen;
+		tilgung = rate-zinsen;
+		schulden -= tilgung;
+		summeBezahlt += rate;
+		summeTilgung += tilgung;
+		summeZinsen += zinsen;
+		
+		if (monat<10)
+			ausgabe << " ";
+		ausgabe << " " << monat << "." << jahr;
+		ausgabe.width(10);	ausgabe << rate;
+		ausgabe.width(10);	ausgabe << zinsen;
+		ausgabe.width(10);	ausgabe << tilgung;
+		ausgabe.width(11);	ausgabe << schulden;
+		ausgabe << endl;
+
+		if(monat == 12 || schulden < 0.001)
+		{
+			ausgabe << "Summen: ";
+			ausgabe.width(10);	ausgabe << summeBezahlt;
+			ausgabe.width(10);	ausgabe << summeZinsen;
+			ausgabe.width(10);	ausgabe << summeTilgung;
+			ausgabe.width(11); ausgabe << " pro Jahr" << endl <<endl;
+			gesamtSummeBezahlt += summeBezahlt;
+			gesamtSummeTilgung += summeTilgung;
+			gesamtSummeZinsen += summeZinsen;
+			summeBezahlt = 0.0;
+			summeTilgung = 0.0;
+			summeZinsen = 0.0;
+		}
+		monat++;
+		if (monat == 13)
+		{
+			jahr++; 
+			monat = 1;
+		}
+
+		zinsen = schulden*zinsatz/12.;
+		zinsen = zinsen*100.+0.5;
+		temp = (long)zinsen;
+		zinsen = (double)temp/100.;
+	} while (schulden>0.0001);
+	ausgabe << "Gesamt: ";
+	ausgabe.width(15); ausgabe << gesamtSummeBezahlt;
+	ausgabe.width(15); ausgabe << gesamtSummeZinsen;
+	ausgabe.width(15); ausgabe << gesamtSummeTilgung;
+	ausgabe << endl;
+	ausgabe.close();
+	ausgabe.clear();
+} 
